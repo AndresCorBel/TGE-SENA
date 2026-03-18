@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Simulador de Planeación Estratégica — SENA</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #1D9E75;
+    --green-light: #EAF3DE;
+    --green-dark: #3B6D11;
+    --blue: #185FA5;
+    --blue-light: #E6F1FB;
+    --blue-mid: #378ADD;
+    --amber: #854F0B;
+    --amber-light: #FAEEDA;
+    --amber-mid: #EF9F27;
+    --red: #A32D2D;
+    --red-light: #FCEBEB;
+    --gray-100: #F5F4F0;
+    --gray-200: #E8E6E0;
+    --gray-400: #9A9890;
+    --gray-700: #444441;
+    --gray-900: #1A1A18;
+    --border: rgba(0,0,0,0.10);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #F5F4F0;
+    color: var(--gray-900);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  header {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; gap: 1rem;
+    height: 60px;
+  }
+  .header-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px; color: var(--gray-900);
+    letter-spacing: -0.02em;
+  }
+  .header-badge {
+    font-size: 11px; font-weight: 500;
+    background: var(--green-light); color: var(--green-dark);
+    padding: 3px 10px; border-radius: 20px;
+  }
+  .header-right { margin-left: auto; font-size: 13px; color: var(--gray-400); }
+
+  /* LAYOUT */
+  .container {
+    max-width: 760px; margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  /* PROGRESS */
+  .progress-wrap { margin-bottom: 1.5rem; }
+  .progress-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--gray-400); margin-bottom: 6px; }
+  .progress-bar { height: 5px; background: var(--gray-200); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--blue-mid); border-radius: 3px; transition: width 0.5s ease; }
+  .phase-dots { display: flex; gap: 5px; margin-top: 8px; }
+  .phase-dot {
+    height: 5px; flex: 1; border-radius: 3px;
+    background: var(--gray-200); transition: background 0.3s;
+  }
+  .phase-dot.done { background: var(--green); }
+  .phase-dot.active { background: var(--blue-mid); }
+
+  /* CARDS */
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .card-accent { border-left: 3px solid var(--blue); }
+  .card-green { border-left: 3px solid var(--green); }
+
+  /* EMPRESA BANNER */
+  .empresa-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    background: var(--gray-100); border-radius: var(--radius-sm);
+    padding: 1rem; margin-bottom: 1rem;
+  }
+  .empresa-item { font-size: 13px; color: var(--gray-900); }
+  .empresa-item small { display: block; font-size: 11px; color: var(--gray-400); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* TYPOGRAPHY */
+  .eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--gray-400); margin-bottom: 6px;
+  }
+  h1.sim-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px; color: var(--gray-900);
+    letter-spacing: -0.02em; line-height: 1.2;
+    margin-bottom: 0.5rem;
+  }
+  h2.phase-title {
+    font-size: 20px; font-weight: 600; color: var(--gray-900);
+    margin-bottom: 0.5rem; line-height: 1.3;
+  }
+  .desc { font-size: 14px; color: var(--gray-400); line-height: 1.7; margin-bottom: 1rem; }
+
+  /* BADGES */
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 20px; letter-spacing: 0.02em;
+  }
+  .badge-green { background: var(--green-light); color: var(--green-dark); }
+  .badge-blue { background: var(--blue-light); color: var(--blue); }
+  .badge-amber { background: var(--amber-light); color: var(--amber); }
+  .badge-red { background: var(--red-light); color: var(--red); }
+
+  /* FORM ELEMENTS */
+  .question-block { margin-bottom: 1.25rem; }
+  .q-label { font-size: 14px; font-weight: 600; color: var(--gray-900); margin-bottom: 4px; }
+  .q-hint { font-size: 12px; color: var(--gray-400); margin-bottom: 8px; line-height: 1.6; }
+  
+  textarea, input[type="text"] {
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; color: var(--gray-900);
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    transition: border-color 0.2s;
+    line-height: 1.6;
+  }
+  textarea { min-height: 80px; resize: vertical; }
+  textarea:focus, input[type="text"]:focus {
+    outline: none; border-color: var(--blue-mid);
+    box-shadow: 0 0 0 3px rgba(55,138,221,0.12);
+  }
+
+  .divider { border: none; border-top: 1px solid var(--gray-200); margin: 1.25rem 0; }
+
+  /* BUTTONS */
+  .btn-row { display: flex; gap: 8px; margin-top: 1.25rem; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--blue); color: #fff;
+    border: none; border-radius: var(--radius-sm);
+    padding: 10px 22px; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: background 0.2s, transform 0.1s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-primary:hover { background: #0C447C; }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-secondary {
+    background: transparent; color: var(--gray-700);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 22px; font-size: 14px;
+    cursor: pointer; transition: background 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-secondary:hover { background: var(--gray-100); }
+
+  /* EVENT CARD */
+  .event-card {
+    background: var(--amber-light);
+    border: 1px solid var(--amber-mid);
+    border-radius: var(--radius-sm);
+    padding: 1rem; margin-bottom: 1rem;
+  }
+  .event-tag { font-size: 11px; font-weight: 700; color: var(--amber); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .event-desc { font-size: 13px; color: #633806; line-height: 1.6; }
+
+  /* SCORE */
+  .score-hero {
+    display: flex; align-items: baseline; gap: 10px; margin-bottom: 1.25rem;
+  }
+  .score-big { font-family: 'DM Serif Display', serif; font-size: 64px; color: var(--gray-900); line-height: 1; }
+  .score-den { font-size: 20px; color: var(--gray-400); }
+
+  .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 1rem 0; }
+  .score-item {
+    background: var(--gray-100); border-radius: var(--radius-sm); padding: 12px;
+  }
+  .s-label { font-size: 11px; color: var(--gray-400); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .s-val { font-size: 22px; font-weight: 600; color: var(--gray-900); }
+  .score-bar { height: 4px; background: var(--gray-200); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .score-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
+
+  /* COMPETENCIAS */
+  .comp-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 500;
+    padding: 5px 12px; border-radius: 20px; margin: 3px;
+  }
+  .comp-ok { background: var(--green-light); color: var(--green-dark); }
+  .comp-no { background: var(--red-light); color: var(--red); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table.eval { width: 100%; font-size: 13px; border-collapse: collapse; }
+  table.eval th {
+    text-align: left; font-size: 11px; font-weight: 600;
+    color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 6px 8px; border-bottom: 1px solid var(--gray-200);
+  }
+  table.eval td { padding: 8px; border-bottom: 1px solid var(--gray-200); vertical-align: top; }
+  table.eval tr:last-child td { border-bottom: none; }
+
+  /* INTRO HERO */
+  .intro-hero {
+    background: var(--gray-900); border-radius: var(--radius);
+    padding: 2rem; margin-bottom: 1rem; position: relative; overflow: hidden;
+  }
+  .intro-hero::before {
+    content: '';
+    position: absolute; top: -40px; right: -40px;
+    width: 200px; height: 200px; border-radius: 50%;
+    background: rgba(55,138,221,0.12);
+  }
+  .intro-hero .eyebrow { color: var(--blue-mid); }
+  .intro-hero h1 { color: #fff; font-size: 32px; margin-bottom: 0.75rem; }
+  .intro-hero .desc { color: rgba(255,255,255,0.6); margin-bottom: 1.25rem; }
+  .intro-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 520px) {
+    .empresa-grid { grid-template-columns: 1fr; }
+    .score-grid { grid-template-columns: 1fr; }
+    .intro-hero h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-logo">NutriAndina Sim</div>
+  <span class="header-badge">SENA · Gestión Empresarial</span>
+  <div class="header-right" id="header-fase"></div>
+</header>
+
+<div class="container">
+
+  <!-- INTRO -->
+  <div id="screen-intro">
+    <div class="intro-hero">
+      <div class="eyebrow">Simulador interactivo</div>
+      <h1 class="sim-title">Planeación Estratégica de Emprendimiento</h1>
+      <p class="desc">Asume el rol de emprendedor y gerente de tu proyecto productivo. Atraviesa 7 fases de diagnóstico y formulación estratégica para recibir una evaluación con puntaje, competencias SENA y recomendaciones profesionales.</p>
+      <div class="intro-badges">
+        <span class="badge badge-blue">7 fases</span>
+        <span class="badge badge-green">Evaluación automática</span>
+        <span class="badge badge-amber">Fondo Emprender</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="eyebrow">Comenzar</div>
+      <h2 class="phase-title" style="font-size:17px;">¿Cuál es tu nombre, aprendiz?</h2>
+      <input type="text" id="nombre-input" placeholder="Ej: Laura Gómez" maxlength="60" style="margin-top:8px;"/>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="iniciarSim()">Iniciar simulación →</button>
+      </div>
+    </div>
+    <div class="card" style="background:var(--gray-100); border:none;">
+      <div class="eyebrow" style="margin-bottom:8px;">Empresa asignada</div>
+      <div class="empresa-grid" style="background:#fff; border:1px solid var(--border);">
+        <div class="empresa-item"><small>Emprendimiento</small>NutriAndina — Snacks Saludables</div>
+        <div class="empresa-item"><small>Sector</small>Agroindustria / Alimentos</div>
+        <div class="empresa-item"><small>Producto</small>Snacks de frutas andinas deshidratadas</div>
+        <div class="empresa-item"><small>Ubicación</small>Manizales, Caldas</div>
+        <div class="empresa-item"><small>Público objetivo</small>Jóvenes urbanos 18–35 años</div>
+        <div class="empresa-item"><small>Madurez</small><span class="badge badge-amber">Prototipo</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIMULADOR -->
+  <div id="screen-sim" class="hidden">
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span id="prog-label">Fase 1 de 7</span>
+        <span id="prog-pct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+      <div class="phase-dots" id="phase-dots"></div>
+    </div>
+    <div id="empresa-mini"></div>
+    <div id="event-banner-sim"></div>
+    <div id="phase-content"></div>
+  </div>
+
+  <!-- RESULTADOS -->
+  <div id="screen-results" class="hidden"></div>
+
+</div>
+
+<script>
+const EMPRESA = {
+  nombre: "NutriAndina — Snacks Saludables",
+  sector: "Agroindustria / Alimentos",
+  producto: "Snacks naturales de frutas andinas deshidratadas (uchuva, maracuyá, guanábana)",
+  ubicacion: "Manizales, Caldas",
+  publico: "Jóvenes urbanos 18–35 años, tiendas naturistas, supermercados regionales",
+  situacion: "Prototipo validado. Primer lote piloto vendido en ferias locales.",
+  madurez: "Prototipo"
+};
+
+const EVENTS = [
+  { fase: 3, titulo: "¡Nuevo competidor!", desc: "Una empresa de Bogotá lanza snacks similares con distribución nacional y precios más bajos. Considera esto al responder las preguntas de esta fase: ¿cómo ajustarías tu estrategia competitiva?" },
+  { fase: 5, titulo: "Oportunidad de expansión", desc: "Un distribuidor de Medellín ofrece llevar tus productos a 50 puntos de venta nuevos, pero exige producción 3× mayor en 60 días. Considera esto en tu formulación estratégica de esta fase." }
+];
+
+const FASES = [
+  { id:1, nombre:"Identidad", titulo:"Fase 1 — Identidad del emprendimiento", desc:"Define los fundamentos estratégicos de NutriAndina. Esta es la base de toda la planeación.",
+    preguntas:[
+      { id:"mision", label:"Misión", hint:"¿Cuál es el propósito de NutriAndina? ¿Por qué existe? (2–3 oraciones)" },
+      { id:"vision", label:"Visión", hint:"¿Dónde quieres ver el emprendimiento en 5 años?" },
+      { id:"valores", label:"Valores organizacionales", hint:"Lista 3–5 valores que guían a NutriAndina (ej: sostenibilidad, calidad, innovación)" },
+      { id:"propuesta", label:"Propuesta de valor", hint:"¿Qué le ofreces al cliente que la competencia no tiene? ¿Cuál es tu diferenciador?" }
+    ]
+  },
+  { id:2, nombre:"PESTEL", titulo:"Fase 2 — Análisis del entorno (PESTEL)", desc:"Analiza los factores del entorno colombiano que afectan a NutriAndina.",
+    preguntas:[
+      { id:"politico", label:"Factor Político", hint:"¿Qué políticas públicas colombianas (Fondo Emprender, apoyo PyMEs, Procolombia) representan oportunidades o amenazas?" },
+      { id:"economico", label:"Factor Económico", hint:"¿Cómo afecta la economía colombiana actual (inflación, TRM, poder adquisitivo) al negocio?" },
+      { id:"social", label:"Factor Social", hint:"¿Qué tendencias sociales (salud, bienestar, alimentación consciente) favorecen o dificultan a NutriAndina?" },
+      { id:"tecnologico", label:"Factor Tecnológico", hint:"¿Qué tecnologías (e-commerce, redes sociales, maquinaria de deshidratación) puede aprovechar?" },
+      { id:"ambiental", label:"Factor Ambiental", hint:"¿Qué riesgos o ventajas ambientales tiene producir snacks de frutas andinas en Colombia?" },
+      { id:"legal", label:"Factor Legal", hint:"¿Qué normas debe cumplir NutriAndina? (INVIMA, etiquetado, registro sanitario, RUT, etc.)" }
+    ]
+  },
+  { id:3, nombre:"Mercado", titulo:"Fase 3 — Análisis del mercado", desc:"Examina el mercado de snacks saludables en Colombia aplicando las 5 Fuerzas de Porter.",
+    preguntas:[
+      { id:"clientes", label:"Clientes objetivo", hint:"Describe quiénes son, dónde están, qué buscan y cómo deciden comprar." },
+      { id:"competencia", label:"Competencia directa", hint:"¿Quiénes son los principales competidores? Fortalezas y debilidades de al menos 2." },
+      { id:"sustitutos", label:"Productos sustitutos", hint:"¿Qué otros productos podría comprar el cliente en lugar de tus snacks?" },
+      { id:"proveedores", label:"Proveedores clave", hint:"¿De dónde obtendrás las frutas? ¿Hay riesgo de desabastecimiento? ¿Cuál es tu poder de negociación?" },
+      { id:"barreras", label:"Barreras de entrada", hint:"¿Qué tan difícil es para un nuevo competidor entrar al mercado de snacks saludables en Colombia?" }
+    ]
+  },
+  { id:4, nombre:"DOFA", titulo:"Fase 4 — Diagnóstico interno (Matriz DOFA)", desc:"Analiza la situación interna de NutriAndina y cruza factores para formular estrategias.",
+    preguntas:[
+      { id:"fortalezas", label:"Fortalezas internas", hint:"¿Qué hace bien NutriAndina? ¿Qué recursos o capacidades tiene? (mínimo 3)" },
+      { id:"debilidades", label:"Debilidades internas", hint:"¿Qué necesita mejorar? ¿En qué áreas es vulnerable? (mínimo 3)" },
+      { id:"estrategias_fo", label:"Estrategias FO (Fortalezas + Oportunidades)", hint:"¿Cómo puedes usar tus fortalezas para aprovechar las oportunidades del entorno?" },
+      { id:"estrategias_da", label:"Estrategias DA (Debilidades + Amenazas)", hint:"¿Cómo puedes reducir debilidades para protegerte de las amenazas detectadas?" }
+    ]
+  },
+  { id:5, nombre:"Estrategia", titulo:"Fase 5 — Formulación estratégica", desc:"Define la dirección estratégica con objetivos concretos y estrategias de crecimiento.",
+    preguntas:[
+      { id:"objetivos", label:"Objetivos estratégicos SMART", hint:"Escribe 2–3 objetivos específicos, medibles, alcanzables, relevantes y con tiempo definido." },
+      { id:"crecimiento", label:"Estrategia de crecimiento", hint:"¿Penetración de mercado, desarrollo de producto, nuevos mercados o diversificación? Justifica." },
+      { id:"posicionamiento", label:"Propuesta de posicionamiento", hint:"¿Cómo quieres que el mercado perciba a NutriAndina? ¿Qué mensaje o slogan usarías?" }
+    ]
+  },
+  { id:6, nombre:"Plan de acción", titulo:"Fase 6 — Plan de acción", desc:"Convierte la estrategia en acciones concretas con responsables, tiempos y recursos.",
+    preguntas:[
+      { id:"actividades", label:"Actividades clave (próximos 6 meses)", hint:"Lista las 4–6 actividades más importantes para ejecutar tu plan estratégico." },
+      { id:"recursos", label:"Recursos necesarios", hint:"¿Qué necesitas en términos de capital, personas, maquinaria, tecnología o alianzas?" },
+      { id:"presupuesto", label:"Presupuesto estimado", hint:"¿Cuánto dinero necesitas? Describe en qué lo gastarías (aproximado en pesos colombianos)." },
+      { id:"indicadores", label:"Indicadores de cumplimiento (KPIs)", hint:"Define 3–4 indicadores concretos (ej: ventas mensuales, clientes nuevos, unidades producidas)." }
+    ]
+  },
+  { id:7, nombre:"CMI", titulo:"Fase 7 — Cuadro de Mando Integral", desc:"Diseña un esquema simplificado de seguimiento estratégico para NutriAndina.",
+    preguntas:[
+      { id:"cmi_financiera", label:"Perspectiva Financiera", hint:"¿Qué metas financieras buscas en año 1 y 2? (ventas, utilidad, retorno de inversión)" },
+      { id:"cmi_clientes", label:"Perspectiva de Clientes", hint:"¿Cómo medirás satisfacción y fidelización? ¿Qué métricas de cliente usarás?" },
+      { id:"cmi_procesos", label:"Perspectiva de Procesos internos", hint:"¿Qué procesos clave debes mejorar? (producción, logística, calidad, atención)" },
+      { id:"cmi_aprendizaje", label:"Perspectiva de Aprendizaje y crecimiento", hint:"¿Cómo desarrollarás al equipo? ¿Qué capacitaciones o innovaciones planeas?" }
+    ]
+  }
+];
+
+let currentPhase = 0;
+let answers = {};
+let nombreAprendiz = "";
+let eventShown = {};
+
+function iniciarSim() {
+  const n = document.getElementById("nombre-input").value.trim();
+  if (!n) { alert("Por favor ingresa tu nombre para continuar."); return; }
+  nombreAprendiz = n;
+  document.getElementById("screen-intro").classList.add("hidden");
+  document.getElementById("screen-sim").classList.remove("hidden");
+  renderEmpresaMini();
+  renderDots();
+  renderPhase(0);
+}
+
+function renderDots() {
+  const c = document.getElementById("phase-dots");
+  c.innerHTML = FASES.map((f,i) => `<div class="phase-dot" id="pd-${i}"></div>`).join("");
+}
+
+function updateProgress() {
+  const pct = Math.round((currentPhase / FASES.length) * 100);
+  document.getElementById("prog-fill").style.width = pct + "%";
+  document.getElementById("prog-pct").textContent = pct + "%";
+  document.getElementById("prog-label").textContent = `Fase ${currentPhase + 1} de ${FASES.length} — ${FASES[currentPhase].nombre}`;
+  document.getElementById("header-fase").textContent = `Fase ${currentPhase + 1}/7`;
+  FASES.forEach((f, i) => {
+    const dot = document.getElementById("pd-" + i);
+    if (dot) dot.className = "phase-dot " + (i < currentPhase ? "done" : i === currentPhase ? "active" : "");
+  });
+}
+
+function renderEmpresaMini() {
+  document.getElementById("empresa-mini").innerHTML = `
+    <div class="empresa-grid" style="background:var(--gray-100);border-radius:var(--radius-sm);padding:0.75rem;margin-bottom:1rem;">
+      <div class="empresa-item"><small>Empresa</small>${EMPRESA.nombre}</div>
+      <div class="empresa-item"><small>Ubicación</small>${EMPRESA.ubicacion}</div>
+      <div class="empresa-item" style="grid-column:1/-1"><small>Producto</small>${EMPRESA.producto}</div>
+    </div>`;
+}
+
+function renderPhase(idx) {
+  currentPhase = idx;
+  updateProgress();
+  const fase = FASES[idx];
+  const ev = EVENTS.find(e => e.fase === fase.id && !eventShown[fase.id]);
+  let eventHtml = "";
+  if (ev) {
+    eventShown[fase.id] = true;
+    eventHtml = `<div class="event-card"><div class="event-tag">⚡ Situación inesperada — ${ev.titulo}</div><div class="event-desc">${ev.desc}</div></div>`;
+  }
+  const isLast = idx === FASES.length - 1;
+  const pregsHtml = fase.preguntas.map((p, i) => `
+    <div class="question-block">
+      <div class="q-label">${p.label}</div>
+      <div class="q-hint">${p.hint}</div>
+      <textarea id="ans-${p.id}" placeholder="Escribe tu respuesta aquí...">${answers[p.id] || ""}</textarea>
+    </div>
+    ${i < fase.preguntas.length - 1 ? '<hr class="divider"/>' : ""}
+  `).join("");
+
+  document.getElementById("phase-content").innerHTML = `
+    ${eventHtml}
+    <div class="card ${idx === 0 ? 'card-accent' : ''}">
+      <div class="eyebrow">Fase ${fase.id} de ${FASES.length}</div>
+      <h2 class="phase-title">${fase.titulo}</h2>
+      <p class="desc">${fase.desc}</p>
+      ${pregsHtml}
+      <div class="btn-row">
+        ${idx > 0 ? `<button class="btn-secondary" onclick="prevPhase()">← Anterior</button>` : ""}
+        <button class="btn-primary" onclick="${isLast ? 'finalizarSim()' : 'nextPhase()'}">${isLast ? "Finalizar y evaluar →" : "Continuar →"}</button>
+      </div>
+    </div>`;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function saveAnswers() {
+  FASES[currentPhase].preguntas.forEach(p => {
+    const el = document.getElementById("ans-" + p.id);
+    if (el) answers[p.id] = el.value.trim();
+  });
+}
+
+function validar() {
+  const fase = FASES[currentPhase];
+  const vacias = fase.preguntas.filter(p => !answers[p.id] || answers[p.id].length < 15);
+  if (vacias.length > 0) {
+    alert("Por favor completa estas respuestas antes de continuar:\n\n" + vacias.map(p => "• " + p.label).join("\n") + "\n\n(Mínimo 15 caracteres por campo)");
+    return false;
+  }
+  return true;
+}
+
+function nextPhase() { saveAnswers(); if (!validar()) return; renderPhase(currentPhase + 1); }
+function prevPhase() { saveAnswers(); renderPhase(currentPhase - 1); }
+
+function evaluar() {
+  const criterios = [
+    { key:"coherencia", label:"Coherencia estratégica", ids:["mision","vision","propuesta","posicionamiento"] },
+    { key:"entorno", label:"Análisis del entorno", ids:["politico","economico","social","tecnologico","ambiental","legal"] },
+    { key:"mercado", label:"Análisis de mercado", ids:["clientes","competencia","sustitutos","proveedores","barreras"] },
+    { key:"dofa", label:"Diagnóstico DOFA", ids:["fortalezas","debilidades","estrategias_fo","estrategias_da"] },
+    { key:"objetivos", label:"Claridad de objetivos", ids:["objetivos","crecimiento"] },
+    { key:"plan", label:"Plan de acción", ids:["actividades","recursos","presupuesto","indicadores"] },
+    { key:"cmi", label:"Cuadro de Mando Integral", ids:["cmi_financiera","cmi_clientes","cmi_procesos","cmi_aprendizaje"] }
+  ];
+  const kw = ["estrategia","mercado","cliente","competencia","objetivo","colombia","sena","fondo emprender","innovaci","calidad","sostenib","crecimiento","ventas","producci","marca","valor","diferenci","indicador","meta","plan","smart","posicion"];
+  const scores = {};
+  criterios.forEach(c => {
+    let total = 0;
+    c.ids.forEach(id => {
+      const ans = answers[id] || "";
+      let pts = ans.length > 200 ? 95 : ans.length > 120 ? 82 : ans.length > 60 ? 68 : ans.length > 20 ? 52 : 30;
+      const kCount = kw.filter(k => ans.toLowerCase().includes(k)).length;
+      pts = Math.min(100, pts + kCount * 2);
+      total += pts;
+    });
+    scores[c.key] = Math.round(total / c.ids.length);
+  });
+  const global = Math.round(Object.values(scores).reduce((a,b) => a+b, 0) / criterios.length);
+  return { criterios, scores, global };
+}
+
+function fillColor(s) { return s >= 78 ? '#1D9E75' : s >= 62 ? '#378ADD' : '#E24B4A'; }
+
+function finalizarSim() {
+  saveAnswers();
+  if (!validar()) return;
+  document.getElementById("screen-sim").classList.add("hidden");
+  document.getElementById("screen-results").classList.remove("hidden");
+  document.getElementById("header-fase").textContent = "Resultados";
+
+  const ev = evaluar();
+  const g = ev.global;
+  let nivel, nBadge;
+  if (g >= 90) { nivel = "Excelente"; nBadge = "badge-green"; }
+  else if (g >= 80) { nivel = "Alto"; nBadge = "badge-blue"; }
+  else if (g >= 70) { nivel = "Medio"; nBadge = "badge-amber"; }
+  else { nivel = "Bajo"; nBadge = "badge-red"; }
+
+  const fondoMsg = g >= 75 ? "Alta preparación para Fondo Emprender" : g >= 60 ? "Preparación media — requiere ajustes" : "Preparación baja — refuerza el plan";
+  const fondoBadge = g >= 75 ? "badge-green" : g >= 60 ? "badge-amber" : "badge-red";
+
+  const competencias = [
+    { label:"Pensamiento estratégico", ok: ev.scores.coherencia >= 68 },
+    { label:"Análisis empresarial", ok: (ev.scores.entorno + ev.scores.mercado)/2 >= 68 },
+    { label:"Toma de decisiones", ok: ev.scores.dofa >= 68 },
+    { label:"Formulación de proyectos", ok: ev.scores.plan >= 68 },
+    { label:"Gestión del emprendimiento", ok: ev.scores.cmi >= 68 }
+  ];
+
+  const rec = g >= 80
+    ? "Consolida los canales de distribución e inicia el proceso de registro INVIMA. Desarrolla un plan de marketing digital enfocado en redes sociales y considera postular al Fondo Emprender con el plan actual."
+    : g >= 65
+    ? "Refuerza los objetivos SMART con metas numéricas concretas y trabaja en la viabilidad financiera. Profundiza el análisis de competidores y ajusta la propuesta de valor antes de postular al Fondo Emprender."
+    : "Revisa los módulos de planeación estratégica del programa SENA y profundiza cada fase del simulador. Busca acompañamiento de tu instructor para fortalecer el análisis empresarial y la formulación del proyecto.";
+
+  const perfMsj = g >= 80
+    ? `${nombreAprendiz} demuestra un nivel alto de competencia en gestión empresarial. El proyecto presenta condiciones favorables para avanzar a etapa productiva.`
+    : g >= 65
+    ? `${nombreAprendiz} muestra comprensión de los fundamentos. Se recomienda profundizar en el análisis cuantitativo y la viabilidad financiera.`
+    : `${nombreAprendiz} necesita reforzar las competencias en análisis empresarial. Se sugiere revisar los módulos del programa y repetir la simulación.`;
+
+  document.getElementById("screen-results").innerHTML = `
+    <div class="card card-green">
+      <div class="eyebrow">Evaluación completada</div>
+      <h2 class="phase-title">Informe de desempeño estratégico</h2>
+      <p class="desc">${nombreAprendiz} · ${EMPRESA.nombre} · ${EMPRESA.ubicacion}</p>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">Puntaje global</div>
+      <div class="score-hero">
+        <span class="score-big">${g}</span>
+        <span class="score-den">/100</span>
+        <span class="badge ${nBadge}" style="margin-left:6px;">${nivel}</span>
+      </div>
+      <div class="score-grid">
+        ${ev.criterios.map(c => `
+          <div class="score-item">
+            <div class="s-label">${c.label}</div>
+            <div class="s-val">${ev.scores[c.key]}</div>
+            <div class="score-bar"><div class="score-fill" style="width:${ev.scores[c.key]}%;background:${fillColor(ev.scores[c.key])}"></div></div>
+          </div>`).join("")}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">Diagnóstico Fondo Emprender</div>
+      <span class="badge ${fondoBadge}" style="margin-bottom:1rem;display:inline-block;">${fondoMsg}</span>
+      <hr class="divider"/>
+      <div class="table-wrap">
+        <table class="eval">
+          <thead><tr><th>Dimensión</th><th>Puntaje</th><th>Observación</th></tr></thead>
+          <tbody>
+            ${ev.criterios.map(c => `
+              <tr>
+                <td>${c.label}</td>
+                <td><span class="badge ${ev.scores[c.key]>=78?'badge-green':ev.scores[c.key]>=62?'badge-blue':'badge-red'}">${ev.scores[c.key]}/100</span></td>
+                <td style="color:var(--gray-400);font-size:12px;">${ev.scores[c.key]>=78?"Sólido y bien fundamentado":ev.scores[c.key]>=62?"Aceptable, puede reforzarse":"Requiere mayor desarrollo"}</td>
+              </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">Recomendaciones profesionales</div>
+      <p style="font-size:14px;color:var(--gray-700);line-height:1.7;margin-bottom:1rem;">${rec}</p>
+      <div style="background:var(--gray-100);border-radius:var(--radius-sm);padding:1rem;">
+        <div class="q-label" style="margin-bottom:6px;">Sugerencias de sostenibilidad</div>
+        <p class="q-hint" style="margin:0;">• Diversificar productos para reducir dependencia de una sola línea.<br>• Construir reservas financieras desde los primeros meses de operación.<br>• Mantener alianzas con comunidades productoras agrícolas de Caldas.<br>• Explorar certificaciones (orgánico, comercio justo) como diferenciador de mercado.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">Retroalimentación pedagógica SENA</div>
+      <div style="display:flex;flex-wrap:wrap;margin-bottom:1rem;">
+        ${competencias.map(c => `<span class="comp-tag ${c.ok?'comp-ok':'comp-no'}">${c.ok?'✓':'✗'} ${c.label}</span>`).join("")}
+      </div>
+      <hr class="divider"/>
+      <p style="font-size:14px;color:var(--gray-700);line-height:1.7;">${perfMsj}</p>
+    </div>
+
+    <div class="btn-row" style="padding-bottom:2rem;">
+      <button class="btn-secondary" onclick="reiniciar()">← Nueva simulación</button>
+    </div>
+  `;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function reiniciar() {
+  answers = {}; currentPhase = 0; eventShown = {}; nombreAprendiz = "";
+  document.getElementById("screen-results").classList.add("hidden");
+  document.getElementById("screen-intro").classList.remove("hidden");
+  document.getElementById("nombre-input").value = "";
+  document.getElementById("header-fase").textContent = "";
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
